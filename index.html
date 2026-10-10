@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>MTG Lethal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0b0c; --bg2:#141112; --line:#2a2426; --txt:#ece7e4; --dim:#8c8481;
+  --acc:#e0632a; --ok:#4ec77f; --warn:#e8b04b; --bad:#e05252; --vio:#9b7fd4;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-text-size-adjust:100%;padding-bottom:env(safe-area-inset-bottom)}
+a{color:var(--acc)}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+h1{font-family:var(--mono);font-size:1.6rem;letter-spacing:.06em;color:var(--acc);margin:0;text-transform:uppercase}
+h2{font-family:var(--mono);font-size:1rem;letter-spacing:.08em;color:var(--acc);text-transform:uppercase;margin:28px 0 10px}
+h3{font-size:.95rem;margin:16px 0 6px}
+.sub{color:var(--dim);font-size:.82rem;font-family:var(--mono);letter-spacing:.05em}
+button{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;
+  background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:8px;
+  padding:9px 14px;cursor:pointer}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button.p{border-color:var(--acc);color:var(--acc)}
+button.p:hover{background:var(--acc);color:#141112}
+button.sm{padding:5px 9px;font-size:.7rem;border-radius:6px}
+button:disabled{opacity:.4;cursor:default}
+input,textarea,select{font-family:var(--sans);font-size:15px;background:var(--bg2);color:var(--txt);
+  border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc)}
+textarea{font-family:var(--mono);font-size:12.5px;line-height:1.45;min-height:200px;resize:vertical}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.muted{color:var(--dim)}
+.mono{font-family:var(--mono)}
+.sp{height:1px;background:var(--line);margin:18px 0}
+
+/* ---- login ---- */
+#login{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+#login .box{width:100%;max-width:360px}
+#login h1{text-align:center;margin-bottom:6px}
+#login .sub{text-align:center;display:block;margin-bottom:24px}
+#login input{margin-bottom:10px}
+#login button{width:100%}
+#lerr{color:var(--bad);font-size:.85rem;min-height:1.3em;margin-top:10px;text-align:center}
+
+/* ---- app ---- */
+#app{display:none}
+#app.on{display:block}
+header{border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:4px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:14px 0}
+.stat{background:var(--bg2);border:1px solid var(--line);border-top:2px solid var(--acc);border-radius:10px;padding:10px 12px}
+.stat .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.09em;color:var(--dim);text-transform:uppercase}
+.stat .v{font-family:var(--mono);font-size:1.5rem;color:var(--warn);line-height:1.2}
+nav{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
+nav button{border:none;border-bottom:2px solid transparent;border-radius:0;padding:10px 12px}
+nav button.on{color:var(--acc);border-bottom-color:var(--acc)}
+section{display:none}
+section.on{display:block}
+[hidden]{display:none!important}
+
+/* ---- listes ---- */
+.pile{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.pile>summary{list-style:none;cursor:pointer;padding:12px 14px;background:var(--bg2);
+  display:flex;align-items:center;gap:10px}
+.pile>summary::-webkit-details-marker{display:none}
+.pile .nm{flex:1;font-weight:500}
+.pile .ct{font-family:var(--mono);font-size:.8rem;color:var(--dim)}
+.pile .ct.ok{color:var(--ok)} .pile .ct.no{color:var(--bad)}
+.pile .bd{padding:4px 14px 14px}
+.ln{display:flex;gap:10px;align-items:center;padding:5px 0;border-bottom:1px solid #1d1819;font-size:.9rem}
+.ln:last-child{border-bottom:none}
+.ln .q{font-family:var(--mono);color:var(--dim);min-width:22px}
+.ln .n{flex:1;min-width:0}
+.pill{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;padding:2px 6px;border-radius:999px;
+  border:1px solid var(--line);color:var(--dim);text-transform:uppercase;white-space:nowrap}
+.pill.gc{border-color:var(--vio);color:var(--vio)}
+.pill.ban{border-color:var(--bad);color:var(--bad)}
+.pill.test{border-color:var(--warn);color:var(--warn)}
+.pill.obt{border-color:var(--acc);color:var(--acc)}
+
+/* ---- recherche ---- */
+.sbox{position:relative}
+#sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:300px;overflow-y:auto}
+#sugg div{padding:9px 12px;cursor:pointer;font-size:.92rem;border-bottom:1px solid #1d1819}
+#sugg div:last-child{border-bottom:none}
+#sugg div:hover{background:#1d1819;color:var(--acc)}
+.cardview{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.cardview img{width:200px;border-radius:10px;flex-shrink:0}
+.cardview .info{flex:1;min-width:220px}
+.ot{font-size:.88rem;white-space:pre-wrap;color:#cfc8c5;margin:8px 0}
+.where{margin-top:10px}
+.where .w{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #1d1819;font-size:.9rem}
+
+.note{background:#1a1413;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:10px 12px;
+  font-size:.88rem;margin:10px 0}
+.err{color:var(--bad)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--bg2);
+  border:1px solid var(--acc);color:var(--txt);border-radius:999px;padding:10px 18px;font-size:.88rem;
+  z-index:99;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th{text-align:left;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid #1d1819;vertical-align:top}
+@media(max-width:560px){.cardview img{width:100%;max-width:260px;margin:0 auto}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="box">
+    <h1>MTG Lethal</h1>
+    <span class="sub">Collection · decks · mouvements</span>
+    <input id="lmail" type="email" placeholder="Courriel" autocomplete="username">
+    <input id="lpass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+    <button class="p" id="lbtn">Connexion</button>
+    <div id="lerr"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="wrap">
+    <header>
+      <div class="row">
+        <div class="grow"><h1>MTG Lethal</h1><span class="sub" id="who"></span></div>
+        <button class="sm" id="out">Déconnexion</button>
+      </div>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <nav>
+      <button data-t="rech" class="on">Chercher</button>
+      <button data-t="decks">Decks</button>
+      <button data-t="test">En test</button>
+      <button data-t="arriv">Arrivage</button>
+      <button data-t="import">Import</button>
+      <button data-t="journal">Journal</button>
+    </nav>
+
+    <!-- CHERCHER -->
+    <section id="s-rech" class="on">
+      <div class="sbox">
+        <input id="q" placeholder="Nom de carte — 3 lettres suffisent" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <div id="sugg" hidden></div>
+      </div>
+      <div id="res"></div>
+    </section>
+
+    <!-- DECKS -->
+    <section id="s-decks">
+      <div class="row" style="margin-bottom:12px">
+        <button class="sm" id="newpile">+ Nouvelle pile</button>
+        <span class="muted" style="font-size:.84rem">Le compteur passe au vert à 100.</span>
+      </div>
+      <div id="piles"></div>
+    </section>
+
+    <!-- EN TEST -->
+    <section id="s-test">
+      <p class="muted" style="font-size:.88rem">Quand tu poses une carte par-dessus une autre pour l'essayer,
+      enregistre-le ici. Tant que ce n'est pas tranché, le deck compte une carte de trop et tu le vois.</p>
+      <div id="tests"></div>
+    </section>
+
+    <!-- ARRIVAGE -->
+    <section id="s-arriv">
+      <p class="muted" style="font-size:.88rem">Colle la liste reçue. Chaque nom est validé contre Scryfall,
+      puis tu assignes carte par carte.</p>
+      <textarea id="arrtxt" placeholder="1 Demonic Tutor&#10;2 Ancient Tomb&#10;Sol Ring"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="p" id="arrgo">Valider la liste</button>
+        <span id="arrst" class="muted mono" style="font-size:.8rem"></span>
+      </div>
+      <div id="arrbac"></div>
+    </section>
+
+    <!-- IMPORT -->
+    <section id="s-import">
+      <p class="muted" style="font-size:.88rem">Un export Moxfield par pile. À faire <b>une seule fois</b> par deck,
+      pour établir la base. Après, tout passe par les mouvements.</p>
+      <div class="row" style="margin-bottom:10px">
+        <input id="impnom" placeholder="Nom de la pile (ex. DECK Ayara)" class="grow">
+      </div>
+      <textarea id="imptxt" placeholder="1 Ayara, First of Locthwain&#10;1 Gravecrawler&#10;20 Swamp"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="p" id="impgo">Importer</button>
+        <span id="impst" class="muted mono" style="font-size:.8rem"></span>
+      </div>
+      <div id="imprap"></div>
+      <div class="sp"></div>
+      <h3>Exporter une pile</h3>
+      <div class="row">
+        <select id="expsel" class="grow"></select>
+        <button class="sm" id="expgo">Copier</button>
+      </div>
+      <p class="muted" style="font-size:.82rem;margin-top:6px">Quantité et nom seulement — rien d'autre.</p>
+    </section>
+
+    <!-- JOURNAL -->
+    <section id="s-journal">
+      <div id="jr"></div>
+    </section>
+
+    <div style="height:48px"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+/* ============================================================
+   MTG Lethal — Florian Millet
+   Aucune donnée de carte n'est stockée ici : tout vient de Scryfall.
+   ============================================================ */
+
+firebase.initializeApp({
+  apiKey: "AIzaSyA1y7_GRSPmSCsgMu-8aGhCtcMxMzIdtiQ",
+  authDomain: "drawing-rocky-training.firebaseapp.com",
+  projectId: "drawing-rocky-training",
+  storageBucket: "drawing-rocky-training.firebasestorage.app",
+  messagingSenderId: "1066760749289",
+  appId: "1:1066760749289:web:e621a66aad29a8f8653078"
+});
+const auth = firebase.auth(), db = firebase.firestore();
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let TO;
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on');
+  clearTimeout(TO); TO=setTimeout(()=>t.classList.remove('on'),2200); }
+
+/* ---------- état ---------- */
+let UID=null, MAIL=null;
+let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[] };
+
+const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Gitrog","DECK Strefan",
+                "DECK Zhulodok","DECK Elementals","Cartable Emile","Carte Emile","Carte Regis",
+                "Carte Floflo","Side Auntie Ool","À répartir"];
+const estDeck = p => p.startsWith('DECK ');
+
+/* ---------- Scryfall ---------- */
+const SF = 'https://api.scryfall.com';
+const cache = {};           // nom exact -> objet carte
+let lastCall = 0;
+async function sf(path){
+  const w = 100 - (Date.now()-lastCall);
+  if (w>0) await new Promise(r=>setTimeout(r,w));
+  lastCall = Date.now();
+  const r = await fetch(SF+path, {headers:{'Accept':'application/json'}});
+  if(!r.ok) throw new Error(r.status===404 ? 'introuvable' : ('Scryfall '+r.status));
+  return r.json();
+}
+async function carte(nom){
+  if (cache[nom]) return cache[nom];
+  const c = await sf('/cards/named?fuzzy='+encodeURIComponent(nom));
+  cache[c.name] = c; cache[nom] = c;
+  try { localStorage.setItem('sf:'+c.name, JSON.stringify({t:Date.now(),c})); } catch(e){}
+  return c;
+}
+function cacheLocal(nom){
+  try{ const r = localStorage.getItem('sf:'+nom); if(!r) return null;
+       const o = JSON.parse(r); if (Date.now()-o.t > 7*864e5) return null;
+       cache[nom]=o.c; return o.c; }catch(e){ return null; }
+}
+const face = c => (c.card_faces && c.card_faces[0]) ? c.card_faces[0] : c;
+const ci   = c => (c.color_identity||[]).join('') || 'C';
+const prix = c => (c.prices && c.prices.usd) ? c.prices.usd+' USD' : 'prix à vérifier';
+const banni= c => c.legalities && c.legalities.commander === 'banned';
+const gchg = c => !!c.game_changer;
+const texte= c => c.oracle_text || (c.card_faces||[]).map(f=>f.name+' — '+(f.oracle_text||'')).join('\n\n');
+
+/* ---------- Firestore ---------- */
+const ref = () => db.collection('mtg').doc(UID);
+let sauveT;
+function sauver(){
+  clearTimeout(sauveT);
+  sauveT = setTimeout(async ()=>{
+    try { await ref().set(D, {merge:false}); }
+    catch(e){ toast('Sauvegarde refusée — vérifie les règles Firestore'); console.error(e); }
+  }, 600);
+}
+async function charger(){
+  const s = await ref().get();
+  if (s.exists) {
+    const d = s.data();
+    D = { piles:d.piles||{}, tests:d.tests||[], arrivage:d.arrivage||{},
+          journal:d.journal||[], partage:d.partage||[] };
+  } else {
+    D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[] };
+    DEFAUT.forEach(p => D.piles[p] = {});
+    await ref().set(D);
+  }
+  DEFAUT.forEach(p => { if(!D.piles[p]) D.piles[p] = {}; });
+}
+
+/* ---------- mouvements ---------- */
+function note(txt){
+  D.journal.unshift({ d:new Date().toISOString(), t:txt });
+  if (D.journal.length > 400) D.journal.length = 400;
+}
+function ajouter(pile, nom, n){
+  if(!D.piles[pile]) D.piles[pile] = {};
+  D.piles[pile][nom] = (D.piles[pile][nom]||0) + n;
+  if (D.piles[pile][nom] <= 0) delete D.piles[pile][nom];
+}
+function deplacer(nom, de, vers, n){
+  n = n||1;
+  if (de)   ajouter(de,   nom, -n);
+  if (vers) ajouter(vers, nom,  n);
+  note(`${nom} : ${de||'—'} → ${vers||'—'} (${n})`);
+  sauver(); rendu();
+}
+const total = p => Object.values(D.piles[p]||{}).reduce((a,b)=>a+b,0);
+function ou(nom){
+  const r=[]; for (const p in D.piles) if (D.piles[p][nom]) r.push([p, D.piles[p][nom]]);
+  return r;
+}
+const enTest = p => D.tests.filter(t=>t.pile===p).length;
+
+/* ---------- rendu ---------- */
+function rendu(){ stats(); piles(); tests(); arrbac(); expsel(); journal(); }
+
+function stats(){
+  const nd = Object.keys(D.piles).filter(estDeck).length;
+  const nc = Object.values(D.piles).reduce((a,p)=>a+Object.values(p).reduce((x,y)=>x+y,0),0);
+  const mauvais = Object.keys(D.piles).filter(p=>estDeck(p) && total(p)!==100).length;
+  const rep = total('À répartir');
+  $('stats').innerHTML = [
+    ['Decks', nd], ['Cartes', nc],
+    ['Decks ≠ 100', mauvais], ['En test', D.tests.length], ['À répartir', rep]
+  ].map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+}
+
+function piles(){
+  const noms = Object.keys(D.piles).sort((a,b)=>
+    (estDeck(b)-estDeck(a)) || a.localeCompare(b,'fr'));
+  $('piles').innerHTML = noms.map(p=>{
+    const t = total(p), et = enTest(p);
+    const cls = estDeck(p) ? (t===100?'ok':'no') : '';
+    const sfx = et ? ` <span class="pill test">${et} en test</span>` : '';
+    const lignes = Object.keys(D.piles[p]).sort((a,b)=>a.localeCompare(b,'fr'))
+      .map(n=>`<div class="ln"><span class="q">${D.piles[p][n]}</span>
+        <span class="n">${esc(n)}</span>
+        <button class="sm" data-mv="${esc(n)}|${esc(p)}">déplacer</button></div>`).join('')
+      || '<div class="muted" style="padding:8px 0;font-size:.88rem">vide</div>';
+    return `<details class="pile"><summary><span class="nm">${esc(p)}</span>${sfx}
+      <span class="ct ${cls}">${t}${estDeck(p)?' / 100':''}</span></summary>
+      <div class="bd">${lignes}</div></details>`;
+  }).join('');
+}
+
+function tests(){
+  if(!D.tests.length){ $('tests').innerHTML='<p class="muted">Rien en test.</p>'; return; }
+  $('tests').innerHTML = D.tests.map((t,i)=>{
+    const j = Math.floor((Date.now()-new Date(t.d))/864e5);
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="row"><div class="grow">
+        <b>${esc(t.pile)}</b><br>
+        <span style="color:var(--ok)">${esc(t.entre)}</span>
+        <span class="muted">remplace</span>
+        <span style="color:var(--bad)">${esc(t.sort)}</span><br>
+        <span class="sub">depuis ${j} jour${j>1?'s':''}</span>
+      </div>
+      <button class="sm p" data-tk="${i}">garder</button>
+      <button class="sm" data-ta="${i}">annuler</button></div></div>`;
+  }).join('');
+}
+
+function arrbac(){
+  const b = D.arrivage||{}, noms = Object.keys(b);
+  if(!noms.length){ $('arrbac').innerHTML=''; return; }
+  const opts = Object.keys(D.piles).sort().map(p=>`<option>${esc(p)}</option>`).join('');
+  $('arrbac').innerHTML = `<h3>À assigner — ${noms.length}</h3>` + noms.sort().map(n=>
+    `<div class="ln"><span class="q">${b[n]}</span><span class="n">${esc(n)}</span>
+     <select data-as="${esc(n)}" style="width:auto;padding:5px 8px;font-size:.82rem">${opts}</select>
+     <button class="sm" data-asgo="${esc(n)}">placer</button></div>`).join('');
+}
+
+function expsel(){
+  $('expsel').innerHTML = Object.keys(D.piles).sort().map(p=>`<option>${esc(p)}</option>`).join('');
+}
+
+function journal(){
+  if(!D.journal.length){ $('jr').innerHTML='<p class="muted">Aucun mouvement.</p>'; return; }
+  $('jr').innerHTML = '<table><tr><th>Quand</th><th>Quoi</th></tr>' + D.journal.slice(0,120).map(e=>
+    `<tr><td class="mono muted" style="white-space:nowrap">${new Date(e.d).toLocaleDateString('fr-CA')}
+     ${new Date(e.d).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'})}</td>
+     <td>${esc(e.t)}</td></tr>`).join('') + '</table>';
+}
+
+/* ---------- recherche ---------- */
+let qT;
+$('q').addEventListener('input', e=>{
+  clearTimeout(qT); const v = e.target.value.trim();
+  if (v.length<2){ $('sugg').hidden=true; return; }
+  qT = setTimeout(async ()=>{
+    try{
+      const r = await sf('/cards/autocomplete?q='+encodeURIComponent(v));
+      const d = (r.data||[]).slice(0,12);
+      if(!d.length){ $('sugg').hidden=true; return; }
+      $('sugg').innerHTML = d.map(n=>`<div data-pick="${esc(n)}">${esc(n)}</div>`).join('');
+      $('sugg').hidden=false;
+    }catch(err){ $('sugg').hidden=true; }
+  }, 220);
+});
+$('sugg').addEventListener('click', e=>{
+  const d = e.target.closest('[data-pick]'); if(!d) return;
+  $('q').value = d.dataset.pick; $('sugg').hidden=true; montrer(d.dataset.pick);
+});
+$('q').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ $('sugg').hidden=true; const v=$('q').value.trim(); if(v) montrer(v); }
+});
+
+async function montrer(nom){
+  $('res').innerHTML = '<p class="muted">…</p>';
+  let c;
+  try { c = cacheLocal(nom) || await carte(nom); }
+  catch(e){ $('res').innerHTML = `<p class="err">Scryfall : ${esc(e.message)}</p>`; return; }
+  const f = face(c);
+  const img = (c.image_uris && c.image_uris.normal) ||
+              (c.card_faces && c.card_faces[0].image_uris && c.card_faces[0].image_uris.normal) || '';
+  const loc = ou(c.name);
+  const opts = Object.keys(D.piles).sort().map(p=>`<option>${esc(p)}</option>`).join('');
+  $('res').innerHTML = `
+    <div class="cardview">
+      ${img?`<img src="${img}" alt="">`:''}
+      <div class="info">
+        <h3 style="margin-top:0">${esc(c.name)}</h3>
+        <div class="sub">${esc(f.mana_cost||'—')} · ${esc(f.type_line||'')} · ${esc(ci(c))} · ${esc(prix(c))}</div>
+        <div class="row" style="margin:8px 0">
+          ${gchg(c)?'<span class="pill gc">Game Changer</span>':''}
+          ${banni(c)?'<span class="pill ban">Bannie en Commander</span>':''}
+        </div>
+        <div class="ot">${esc(texte(c))}</div>
+        <div class="where">
+          <div class="sub">Où elle est</div>
+          ${loc.length? loc.map(([p,q])=>`<div class="w"><span class="q mono">${q}</span>
+             <span class="grow">${esc(p)}</span>
+             <button class="sm" data-mv="${esc(c.name)}|${esc(p)}">déplacer</button></div>`).join('')
+            : '<div class="w muted">Nulle part dans ta collection.</div>'}
+        </div>
+        <div class="sp"></div>
+        <div class="row">
+          <select id="addp" class="grow">${opts}</select>
+          <button class="sm p" data-add="${esc(c.name)}">ajouter ici</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------- actions déléguées ---------- */
+document.body.addEventListener('click', async e=>{
+  const add = e.target.closest('[data-add]');
+  if (add){ const p = $('addp').value; ajouter(p, add.dataset.add, 1);
+    note(`${add.dataset.add} : ajoutée à ${p}`); sauver(); rendu();
+    toast('Ajoutée à '+p); return; }
+
+  const mv = e.target.closest('[data-mv]');
+  if (mv){
+    const [nom, de] = mv.dataset.mv.split('|');
+    const vers = prompt(`${nom}\n\nDe : ${de}\nVers quelle pile ?\n\n`+Object.keys(D.piles).sort().join('\n'), '');
+    if(!vers) return;
+    if(!D.piles[vers]){ if(!confirm(`Créer la pile « ${vers} » ?`)) return; D.piles[vers]={}; }
+    deplacer(nom, de, vers, 1); toast(`${nom} → ${vers}`); return;
+  }
+
+  const tk = e.target.closest('[data-tk]');
+  if (tk){ const t = D.tests.splice(+tk.dataset.tk,1)[0];
+    ajouter(t.pile, t.sort, -1); ajouter('Carte Floflo', t.sort, 1);
+    note(`Test gardé : ${t.entre} reste dans ${t.pile}, ${t.sort} va au cartable`);
+    sauver(); rendu(); toast('Gardée'); return; }
+
+  const ta = e.target.closest('[data-ta]');
+  if (ta){ const t = D.tests.splice(+ta.dataset.ta,1)[0];
+    ajouter(t.pile, t.entre, -1);
+    note(`Test annulé : ${t.entre} sort de ${t.pile}`);
+    sauver(); rendu(); toast('Annulée'); return; }
+
+  const ag = e.target.closest('[data-asgo]');
+  if (ag){ const n = ag.dataset.asgo;
+    const sel = document.querySelector(`[data-as="${CSS.escape(n)}"]`); if(!sel) return;
+    const q = D.arrivage[n]; ajouter(sel.value, n, q); delete D.arrivage[n];
+    note(`Arrivage : ${q}× ${n} → ${sel.value}`); sauver(); rendu(); toast('Placée'); return; }
+});
+
+/* ---------- arrivage ---------- */
+function lire(txt){
+  const out = {};
+  txt.split('\n').forEach(l=>{
+    l = l.trim().replace(/\s*\([A-Za-z0-9]{3,6}\)\s*[\w-]*\s*$/,'').trim();
+    if(!l || l.startsWith('//') || l.startsWith('#')) return;
+    const m = l.match(/^(\d+)\s*[xX]?\s+(.+)$/);
+    const n = m ? parseInt(m[1],10) : 1;
+    const nom = (m ? m[2] : l).split(' // ')[0].trim();
+    if (nom) out[nom] = (out[nom]||0) + n;
+  });
+  return out;
+}
+async function valider(brut, elStat){
+  const noms = Object.keys(brut), bon = {}, mauvais = [];
+  for (let i=0;i<noms.length;i++){
+    elStat.textContent = `${i+1} / ${noms.length}…`;
+    try { const c = cacheLocal(noms[i]) || await carte(noms[i]); bon[c.name] = (bon[c.name]||0)+brut[noms[i]]; }
+    catch(e){ mauvais.push(noms[i]); }
+  }
+  elStat.textContent = '';
+  return { bon, mauvais };
+}
+$('arrgo').addEventListener('click', async ()=>{
+  const brut = lire($('arrtxt').value);
+  if(!Object.keys(brut).length) return toast('Liste vide');
+  $('arrgo').disabled = true;
+  const { bon, mauvais } = await valider(brut, $('arrst'));
+  $('arrgo').disabled = false;
+  for (const n in bon) D.arrivage[n] = (D.arrivage[n]||0) + bon[n];
+  note(`Arrivage reçu : ${Object.keys(bon).length} cartes`);
+  sauver(); rendu(); $('arrtxt').value='';
+  toast(mauvais.length ? `${mauvais.length} nom(s) non reconnu(s)` : 'Liste validée');
+  if (mauvais.length) $('arrbac').insertAdjacentHTML('afterbegin',
+    `<div class="note"><b>Non reconnus par Scryfall :</b><br>${mauvais.map(esc).join('<br>')}</div>`);
+});
+
+/* ---------- import ---------- */
+$('impgo').addEventListener('click', async ()=>{
+  const pile = $('impnom').value.trim();
+  if(!pile) return toast('Donne un nom de pile');
+  const brut = lire($('imptxt').value);
+  if(!Object.keys(brut).length) return toast('Liste vide');
+  if (D.piles[pile] && Object.keys(D.piles[pile]).length &&
+      !confirm(`« ${pile} » contient déjà ${total(pile)} cartes.\nRemplacer tout son contenu ?`)) return;
+  $('impgo').disabled = true;
+  const { bon, mauvais } = await valider(brut, $('impst'));
+  $('impgo').disabled = false;
+  D.piles[pile] = bon;
+  const n = Object.values(bon).reduce((a,b)=>a+b,0);
+  note(`Import de ${pile} : ${n} cartes`);
+  sauver(); rendu();
+
+  // rapport : couleurs, bannies, game changers
+  let gc=[], ban=[], cols=new Set();
+  for (const nom in bon){ const c = cache[nom]; if(!c) continue;
+    if (gchg(c)) gc.push(nom); if (banni(c)) ban.push(nom);
+    (c.color_identity||[]).forEach(x=>cols.add(x)); }
+  $('imprap').innerHTML = `<div class="note">
+    <b>${pile} — ${n} cartes.</b><br>
+    Identité de couleur présente : ${[...cols].sort().join('') || 'incolore'}<br>
+    Game Changers : <b>${gc.length}</b>${gc.length?' — '+gc.map(esc).join(', '):''}<br>
+    Bannies : <b>${ban.length}</b>${ban.length?' — <span class="err">'+ban.map(esc).join(', ')+'</span>':''}
+    ${mauvais.length?'<br>Non reconnus : <span class="err">'+mauvais.map(esc).join(', ')+'</span>':''}
+    ${n!==100 && estDeck(pile)?'<br><span class="err">Attention : '+n+' cartes, pas 100.</span>':''}
+  </div>`;
+  toast('Importé');
+});
+
+$('expgo').addEventListener('click', ()=>{
+  const p = $('expsel').value, o = D.piles[p]||{};
+  const txt = Object.keys(o).sort((a,b)=>a.localeCompare(b,'fr')).map(n=>`${o[n]} ${n}`).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>toast('Copié'), ()=>{
+    prompt('Copie manuelle :', txt);
+  });
+});
+
+$('newpile').addEventListener('click', ()=>{
+  const n = prompt('Nom de la nouvelle pile :',''); if(!n) return;
+  if (D.piles[n]) return toast('Existe déjà');
+  D.piles[n] = {}; note(`Pile créée : ${n}`); sauver(); rendu();
+});
+
+/* ---------- onglets ---------- */
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('section').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); $('s-'+b.dataset.t).classList.add('on');
+}));
+
+/* ---------- auth ---------- */
+$('lbtn').addEventListener('click', async ()=>{
+  const m = $('lmail').value.trim(), p = $('lpass').value;
+  $('lerr').textContent = '';
+  try { await auth.signInWithEmailAndPassword(m,p); }
+  catch(e){ $('lerr').textContent = e.code==='auth/invalid-credential'
+      ? 'Courriel ou mot de passe invalide.' : e.message; }
+});
+$('lpass').addEventListener('keydown', e=>{ if(e.key==='Enter') $('lbtn').click(); });
+$('out').addEventListener('click', ()=>auth.signOut());
+
+auth.onAuthStateChanged(async u=>{
+  if(!u){ $('login').style.display='flex'; $('app').classList.remove('on'); return; }
+  UID = u.uid; MAIL = u.email;
+  $('login').style.display='none'; $('app').classList.add('on');
+  $('who').textContent = u.email;
+  try { await charger(); rendu(); }
+  catch(e){ console.error(e); toast('Lecture refusée — vérifie les règles Firestore'); }
+});
+</script>
+</body>
+</html>
