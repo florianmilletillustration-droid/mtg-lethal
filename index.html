@@ -178,9 +178,7 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
   <div class="box">
     <h1>Collection Floflo</h1>
     <p class="lead">Ce que tu as, où c'est, et ce qui manque.</p>
-    <input id="lmail" type="email" placeholder="Courriel" autocomplete="username">
-    <input id="lpass" type="password" placeholder="Mot de passe" autocomplete="current-password">
-    <button class="p" id="lbtn">Entrer</button>
+    <button class="p" id="lbtn">Entrer avec Google</button>
     <div id="lerr"></div>
   </div>
 </div>
@@ -722,11 +720,16 @@ $('out').addEventListener('click', ()=>auth.signOut());
 
 $('lbtn').addEventListener('click', async()=>{
   $('lerr').textContent='';
-  try{ await auth.signInWithEmailAndPassword($('lmail').value.trim(), $('lpass').value); }
-  catch(e){ $('lerr').textContent = e.code==='auth/invalid-credential'
-    ? 'Courriel ou mot de passe invalide.' : e.message; }
+  const p = new firebase.auth.GoogleAuthProvider();
+  try{ await auth.signInWithPopup(p); }
+  catch(e){
+    if (e.code==='auth/popup-blocked'){
+      try{ await auth.signInWithRedirect(p); return; }catch(e2){ $('lerr').textContent=e2.message; return; }
+    }
+    if (e.code==='auth/popup-closed-by-user' || e.code==='auth/cancelled-popup-request') return;
+    $('lerr').textContent = e.message;
+  }
 });
-$('lpass').addEventListener('keydown', e=>{ if(e.key==='Enter') $('lbtn').click(); });
 
 auth.onAuthStateChanged(async u=>{
   if(!u){ $('login').style.display='grid'; $('app').classList.remove('on'); return; }
