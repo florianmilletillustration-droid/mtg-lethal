@@ -163,6 +163,8 @@ td{padding:6px 8px;border-bottom:1px solid #1d1819;vertical-align:top}
         <span class="muted" style="font-size:.84rem">Le compteur passe au vert à 100.</span>
       </div>
       <div id="piles"></div>
+      <h2>Parties jouées</h2>
+      <div id="rec"></div>
     </section>
 
     <!-- EN TEST -->
@@ -256,7 +258,7 @@ function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on');
 
 /* ---------- état ---------- */
 let UID=null, MAIL=null;
-let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[] };
+let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{} };
 
 const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Gitrog","DECK Strefan",
                 "DECK Zhulodok","DECK Elementals","Cartable Emile","Carte Emile","Carte Regis",
@@ -309,9 +311,9 @@ async function charger(){
   if (s.exists) {
     const d = s.data();
     D = { piles:d.piles||{}, tests:d.tests||[], arrivage:d.arrivage||{},
-          journal:d.journal||[], partage:d.partage||[] };
+          journal:d.journal||[], partage:d.partage||[], parties:d.parties||{} };
   } else {
-    D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[] };
+    D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{} };
     DEFAUT.forEach(p => D.piles[p] = {});
     await ref().set(D);
   }
@@ -343,7 +345,43 @@ function ou(nom){
 const enTest = p => D.tests.filter(t=>t.pile===p).length;
 
 /* ---------- rendu ---------- */
-function rendu(){ stats(); piles(); tests(); arrbac(); expsel(); journal(); }
+function rendu(){ stats(); piles(); parties(); tests(); arrbac(); expsel(); journal(); }
+
+function parties(){
+  const decks = Object.keys(D.piles).filter(estDeck).sort();
+  if(!decks.length){ $('rec').innerHTML=''; return; }
+  let tv=0, td=0;
+  const lignes = decks.map(p=>{
+    const r = (D.parties||{})[p] || {v:0,d:0};
+    tv+=r.v; td+=r.d;
+    const n = r.v+r.d, pc = n ? Math.round(r.v/n*100) : 0;
+    return `<div class="ln">
+      <span class="n">${esc(p.replace('DECK ',''))}</span>
+      <span class="mono" style="color:var(--ok);min-width:26px;text-align:right">${r.v}</span>
+      <button class="sm" data-rec="${esc(p)}|v|1">+</button>
+      <button class="sm" data-rec="${esc(p)}|v|-1">−</button>
+      <span class="mono" style="color:var(--bad);min-width:26px;text-align:right">${r.d}</span>
+      <button class="sm" data-rec="${esc(p)}|d|1">+</button>
+      <button class="sm" data-rec="${esc(p)}|d|-1">−</button>
+      <span class="mono muted" style="min-width:52px;text-align:right">${n?pc+' %':'—'}</span>
+    </div>`;
+  }).join('');
+  const n = tv+td;
+  $('rec').innerHTML = `<div class="card">
+    <div class="ln" style="border-bottom:1px solid var(--line)">
+      <span class="n sub">Deck</span>
+      <span class="sub" style="min-width:26px;text-align:right">V</span><span style="width:58px"></span>
+      <span class="sub" style="min-width:26px;text-align:right">D</span><span style="width:58px"></span>
+      <span class="sub" style="min-width:52px;text-align:right">Taux</span>
+    </div>
+    ${lignes}
+    <div class="ln" style="border-top:1px solid var(--line);border-bottom:none;padding-top:9px">
+      <span class="n"><b>Total</b></span>
+      <span class="mono" style="color:var(--ok);min-width:26px;text-align:right"><b>${tv}</b></span><span style="width:58px"></span>
+      <span class="mono" style="color:var(--bad);min-width:26px;text-align:right"><b>${td}</b></span><span style="width:58px"></span>
+      <span class="mono muted" style="min-width:52px;text-align:right">${n?Math.round(tv/n*100)+' %':'—'}</span>
+    </div></div>`;
+}
 
 function stats(){
   const nd = Object.keys(D.piles).filter(estDeck).length;
@@ -475,6 +513,15 @@ async function montrer(nom){
 
 /* ---------- actions déléguées ---------- */
 document.body.addEventListener('click', async e=>{
+  const rc = e.target.closest('[data-rec]');
+  if (rc){
+    const [p,k,dv] = rc.dataset.rec.split('|');
+    if(!D.parties) D.parties = {};
+    const r = D.parties[p] || {v:0,d:0};
+    r[k] = Math.max(0, r[k] + parseInt(dv,10));
+    D.parties[p] = r; sauver(); parties(); return;
+  }
+
   const add = e.target.closest('[data-add]');
   if (add){ const p = $('addp').value; ajouter(p, add.dataset.add, 1);
     note(`${add.dataset.add} : ajoutée à ${p}`); sauver(); rendu();
@@ -595,7 +642,7 @@ $('seedgo').addEventListener('click', async ()=>{
     if(!r.ok) throw new Error('fichier introuvable dans le dépôt');
     const s = await r.json();
     D = { piles:s.piles||{}, tests:s.tests||[], arrivage:s.arrivage||{},
-          journal:s.journal||[], partage:D.partage||[] };
+          journal:s.journal||[], partage:D.partage||[], parties:D.parties||{} };
     DEFAUT.forEach(p => { if(!D.piles[p]) D.piles[p] = {}; });
     await ref().set(D);
     rendu(); $('seedst').textContent = '';
