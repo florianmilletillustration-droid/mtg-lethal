@@ -6,6 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#17131a">
 <title>Collection Floflo</title>
+<link rel="icon" type="image/svg+xml" href="icone.svg">
+<link rel="apple-touch-icon" href="icone.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;800&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -196,8 +198,7 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
 
   <div class="wrap">
     <nav>
-      <button data-t="rech" class="on">Chercher</button>
-      <button data-t="decks">Decks</button>
+      <button data-t="rech" class="on">Accueil</button>
       <button data-t="piles">Cartables</button>
       <button data-t="test">En test</button>
       <button data-t="arriv">Arrivage</button>
@@ -213,9 +214,8 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
         <div id="sugg" hidden></div>
       </div>
       <div id="res"></div>
-    </section>
-
-    <section id="s-decks">
+      <div id="alertes"></div>
+      <h2>Tes decks</h2>
       <div class="grid" id="dkgrid"></div>
       <h2>Parties jouées</h2>
       <div id="rec"></div>
@@ -405,7 +405,21 @@ function heros(){
 }
 
 /* ---------- rendu ---------- */
-function rendu(){ tally(); decks(); parties(); piles(); tests(); arrbac(); expsel(); journal(); }
+function rendu(){ tally(); alertes(); decks(); parties(); piles(); tests(); arrbac(); expsel(); journal(); }
+
+function alertes(){
+  const a=[];
+  const mv = Object.keys(D.piles).filter(p=>estDeck(p)&&total(p)!==100)
+    .map(p=>`${p.replace('DECK ','')} à ${total(p)}`);
+  if(mv.length) a.push(['À corriger', mv.join(', ')+' — un deck légal en compte 100.']);
+  if(D.tests.length) a.push(['En test',
+    D.tests.map(t=>`${t.entre} dans ${t.pile.replace('DECK ','')}`).join(', ')+' — à trancher.']);
+  const r=total('À répartir');
+  if(r) a.push(['À placer', `${r} cartes attendent dans le bac d'arrivage.`]);
+  $('alertes').innerHTML = a.length ? a.map(([t,c])=>
+    `<div class="panel" style="border-left:3px solid var(--gold);margin-top:18px">
+       <h3 style="font-size:1rem">${t}</h3><div class="lead" style="margin:0">${esc(c)}</div></div>`).join('') : '';
+}
 
 function tally(){
   const nd = Object.keys(D.piles).filter(estDeck).length;
