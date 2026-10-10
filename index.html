@@ -186,6 +186,18 @@ td{padding:6px 8px;border-bottom:1px solid #1d1819;vertical-align:top}
 
     <!-- IMPORT -->
     <section id="s-import">
+      <div class="card" style="border-color:var(--acc);margin-bottom:18px">
+        <h3 style="margin-top:0">Charger la collection de départ</h3>
+        <p class="muted" style="font-size:.88rem;margin:4px 0 10px">
+          Tes 10 sources et tes 7 decks, tels qu'indexés le 2 octobre, plus les listes d'Ayara et
+          d'Auntie Ool arrêtées depuis. <b>À faire une seule fois.</b> Ça remplace tout ce qu'il y a
+          actuellement dans l'application.</p>
+        <div class="row">
+          <button class="p" id="seedgo">Charger — 5 918 cartes</button>
+          <span id="seedst" class="muted mono" style="font-size:.8rem"></span>
+        </div>
+      </div>
+      <h3>Importer une pile</h3>
       <p class="muted" style="font-size:.88rem">Un export Moxfield par pile. À faire <b>une seule fois</b> par deck,
       pour établir la base. Après, tout passe par les mouvements.</p>
       <div class="row" style="margin-bottom:10px">
@@ -571,6 +583,27 @@ $('expgo').addEventListener('click', ()=>{
   navigator.clipboard.writeText(txt).then(()=>toast('Copié'), ()=>{
     prompt('Copie manuelle :', txt);
   });
+});
+
+/* ---------- collection de départ ---------- */
+$('seedgo').addEventListener('click', async ()=>{
+  const n = Object.values(D.piles).reduce((a,p)=>a+Object.values(p).reduce((x,y)=>x+y,0),0);
+  if (n > 0 && !confirm(`L'application contient déjà ${n} cartes.\nTout remplacer par la collection de départ ?`)) return;
+  $('seedgo').disabled = true; $('seedst').textContent = 'chargement…';
+  try{
+    const r = await fetch('collection-depart.json?v='+Date.now());
+    if(!r.ok) throw new Error('fichier introuvable dans le dépôt');
+    const s = await r.json();
+    D = { piles:s.piles||{}, tests:s.tests||[], arrivage:s.arrivage||{},
+          journal:s.journal||[], partage:D.partage||[] };
+    DEFAUT.forEach(p => { if(!D.piles[p]) D.piles[p] = {}; });
+    await ref().set(D);
+    rendu(); $('seedst').textContent = '';
+    toast('Collection chargée');
+  }catch(e){
+    $('seedst').innerHTML = '<span class="err">'+esc(e.message)+'</span>';
+  }
+  $('seedgo').disabled = false;
 });
 
 $('newpile').addEventListener('click', ()=>{
