@@ -169,6 +169,32 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
 .num{font-variant-numeric:tabular-nums}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}#hart{opacity:.5}}
 @media(max-width:560px){.cv img{width:100%;max-width:280px}.tally{gap:18px}}
+/* ---- fiche de deck, en surimpression ---- */
+.ov{position:fixed;inset:0;z-index:60;background:rgba(10,8,12,.78);
+  display:flex;align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto}
+.ov[hidden]{display:none}
+.ovbx{width:100%;max-width:880px;background:var(--ink2);border:1px solid var(--edge);
+  border-radius:14px;overflow:hidden;margin:auto}
+.ovhd{position:sticky;top:0;z-index:2;background:var(--ink3);border-bottom:1px solid var(--edge);
+  padding:13px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ovhd h3{font-size:1.3rem;flex:1;min-width:140px}
+.ovbd{padding:14px 16px 26px}
+.ovbd h4{font-family:var(--disp);font-size:1rem;color:var(--gold);margin:18px 0 8px;
+  text-transform:none;border-bottom:1px solid var(--edge);padding-bottom:5px}
+.ovbd h4:first-child{margin-top:4px}
+.cx{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid rgba(58,48,64,.5)}
+.cx:last-child{border-bottom:0}
+.cx .th{width:58px;flex:none;aspect-ratio:1/1.1;border-radius:5px;background:#120f15 center/cover no-repeat}
+.cx .co{flex:1;min-width:0}
+.cx .nm{font-family:var(--disp);font-weight:700;font-size:1.02rem}
+.cx .nm .q{color:var(--gold);margin-right:5px}
+.cx .mc{float:right;font-size:.85rem;color:var(--parch2);white-space:nowrap;margin-left:8px}
+.cx .tl{font-size:.85rem;color:var(--dim);font-style:italic}
+.cx .ot{font-size:.9rem;color:var(--parch2);white-space:pre-wrap;margin-top:3px}
+.cx .fl{font-size:.8rem;margin-top:3px}
+.cx .fl b{color:var(--gold)}
+.cx .fl i{color:var(--R);font-style:normal}
+#ovtxt{width:100%;min-height:380px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -278,6 +304,23 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
 
     <section id="s-journal"><div id="jr"></div></section>
     <div style="height:60px"></div>
+  </div>
+</div>
+
+<div class="ov" id="dkv" hidden>
+  <div class="ovbx">
+    <div class="ovhd">
+      <h3 id="ovnom"></h3>
+      <span id="ovpt" class="pt"></span>
+      <button class="sm" id="ovcartes">Cartes</button>
+      <button class="sm" id="ovliste">Liste</button>
+      <button class="sm" id="ovcopy">Copier</button>
+      <button class="sm" id="ovx">Fermer</button>
+    </div>
+    <div class="ovbd">
+      <div class="small" id="ovst"></div>
+      <div id="ovcorps"></div>
+    </div>
   </div>
 </div>
 
@@ -584,7 +627,7 @@ async function montrer(nom){
 /* ---------- actions ---------- */
 document.body.addEventListener('click', async e=>{
   const dk=e.target.closest('[data-deck]');
-  if(dk){ ouvrirPile(dk.dataset.deck); return; }
+  if(dk){ ouvrirDeck(dk.dataset.deck); return; }
 
   const rc=e.target.closest('[data-rec]');
   if(rc){ const [p,k,dv]=rc.dataset.rec.split('|');
@@ -746,7 +789,97 @@ function onglet(t){
 document.querySelectorAll('nav button[data-t]').forEach(b=>
   b.addEventListener('click',()=>onglet(b.dataset.t)));
 
-/* clic sur un deck → ouvre sa liste dans Cartables */
+/* ---------- fiche de deck, en surimpression ---------- */
+const ORDRE = ['Commandant','Créatures','Planeswalkers','Enchantements','Artefacts',
+               'Éphémères','Rituels','Terrains','Autres'];
+function groupeDe(t){
+  if(t.includes('Land')) return 'Terrains';
+  if(t.includes('Creature')) return 'Créatures';
+  if(t.includes('Planeswalker')) return 'Planeswalkers';
+  if(t.includes('Instant')) return 'Éphémères';
+  if(t.includes('Sorcery')) return 'Rituels';
+  if(t.includes('Artifact')) return 'Artefacts';
+  if(t.includes('Enchantment')) return 'Enchantements';
+  return 'Autres';
+}
+let dkCur=null, dkVue='cartes';
+
+async function ouvrirDeck(p){
+  dkCur=p;
+  const t=total(p), ok=t===100;
+  $('ovnom').textContent = p.replace('DECK ','');
+  $('ovpt').textContent = t+' / 100';
+  $('ovpt').className = 'pt '+(ok?'ok':'no');
+  $('ovcorps').innerHTML=''; $('dkv').hidden=false;
+  document.body.style.overflow='hidden';
+
+  const noms = Object.keys(D.piles[p]||{}).sort((a,b)=>a.localeCompare(b,'fr'));
+  const boite = {}; ORDRE.forEach(g=>boite[g]=[]);
+  const nomChef = chef(p);
+  for(let i=0;i<noms.length;i++){
+    if(dkCur!==p) return;                       // fiche refermée entre-temps
+    $('ovst').textContent = `lecture des cartes — ${i+1} / ${noms.length}`;
+    let c=null; try{ c=await carte(noms[i]); }catch(e){}
+    const g = !c ? 'Autres' : (c.name===nomChef ? 'Commandant' : groupeDe(c.type_line||''));
+    boite[g].push([noms[i], D.piles[p][noms[i]], c]);
+  }
+  $('ovst').textContent='';
+  dessinerDeck(boite);
+}
+
+function listeTxt(boite){
+  const l=[];
+  ORDRE.forEach(g=>{ if(!boite[g].length) return;
+    l.push('// '+g.toUpperCase());
+    boite[g].forEach(([n,q])=>l.push(q+' '+n));
+    l.push(''); });
+  return l.join('\n').trim();
+}
+
+let dkBoite=null;
+function dessinerDeck(boite){
+  dkBoite=boite;
+  if(dkVue==='liste'){
+    $('ovcorps').innerHTML = `<textarea id="ovtxt" readonly></textarea>`;
+    $('ovtxt').value = listeTxt(boite);
+    return;
+  }
+  let h='';
+  ORDRE.forEach(g=>{
+    const l=boite[g]; if(!l.length) return;
+    const n=l.reduce((a,[,q])=>a+q,0);
+    h += `<h4>${g} — ${n}</h4>`;
+    l.forEach(([nom,q,c])=>{
+      if(!c){ h+=`<div class="cx"><div class="co"><div class="nm"><span class="q">${q}</span>${esc(nom)}</div>
+        <div class="tl">carte non trouvée sur Scryfall</div></div></div>`; return; }
+      const u=img(c,'art_crop');
+      const fl=[]; if(gchg(c)) fl.push('<b>Game Changer</b>'); if(banni(c)) fl.push('<i>bannie</i>');
+      h += `<div class="cx">
+        <div class="th" style="${u?`background-image:url("${u}")`:''}"></div>
+        <div class="co">
+          <div class="nm"><span class="mc">${esc(face(c).mana_cost||'')}</span><span class="q">${q}</span>${esc(c.name)}</div>
+          <div class="tl">${esc(c.type_line||'')}</div>
+          <div class="ot">${esc(texte(c)||'')}</div>
+          ${fl.length?`<div class="fl">${fl.join(' · ')}</div>`:''}
+        </div></div>`;
+    });
+  });
+  $('ovcorps').innerHTML = h || '<p class="lead">Cette pile est vide.</p>';
+}
+
+function fermerDeck(){ dkCur=null; $('dkv').hidden=true; document.body.style.overflow=''; }
+$('ovx').addEventListener('click', fermerDeck);
+$('dkv').addEventListener('click', e=>{ if(e.target===$('dkv')) fermerDeck(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('dkv').hidden) fermerDeck(); });
+$('ovcartes').addEventListener('click', ()=>{ dkVue='cartes'; if(dkBoite) dessinerDeck(dkBoite); });
+$('ovliste').addEventListener('click', ()=>{ dkVue='liste';  if(dkBoite) dessinerDeck(dkBoite); });
+$('ovcopy').addEventListener('click', async()=>{
+  if(!dkBoite) return;
+  try{ await navigator.clipboard.writeText(listeTxt(dkBoite)); toast('Liste copiée'); }
+  catch(e){ dkVue='liste'; dessinerDeck(dkBoite); $('ovtxt').select(); toast('Sélectionnée — fais Copier'); }
+});
+
+/* ouvre une pile dans l'onglet Cartables */
 function ouvrirPile(p){
   onglet('piles');
   const d=document.querySelector(`#piles [data-pile="${CSS.escape(p)}"]`);
