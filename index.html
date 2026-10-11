@@ -250,7 +250,8 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
         2 octobre, avec les listes d'Ayara et d'Auntie Ool arrêtées depuis. À faire une seule fois :
         ça remplace tout le contenu actuel.</p>
         <div class="row">
-          <button class="p" id="seedgo">Charger 5 918 cartes</button>
+          <button class="p" id="mergego">Ajouter les piles manquantes</button>
+          <button id="seedgo">Tout remplacer</button>
           <span id="seedst" class="small num"></span>
         </div>
       </div>
@@ -704,6 +705,31 @@ $('seedgo').addEventListener('click', async()=>{
     toast('Collection chargée');
   }catch(e){ $('seedst').innerHTML='<span class="err">'+esc(e.message)+'</span>'; }
   $('seedgo').disabled=false;
+});
+
+/* ajoute seulement les piles absentes ou vides — ne touche à rien d'autre */
+$('mergego').addEventListener('click', async()=>{
+  $('mergego').disabled=true; $('seedst').textContent='lecture';
+  try{
+    const r=await fetch('collection-depart.json?v='+Date.now());
+    if(!r.ok) throw new Error('collection-depart.json introuvable dans le dépôt');
+    const s=await r.json(), ajout=[];
+    for(const p in (s.piles||{})){
+      const n=Object.values(s.piles[p]).reduce((a,b)=>a+b,0);
+      if(n>0 && total(p)===0){ D.piles[p]=s.piles[p]; ajout.push(`${p} (${n})`); }
+    }
+    for(const p in (s.chefs||{})) if(!D.chefs[p]) D.chefs[p]=s.chefs[p];
+    DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; });
+    $('seedst').textContent='';
+    if(!ajout.length){ toast('Rien à ajouter — toutes les piles sont déjà remplies'); }
+    else{
+      note('Piles ajoutées : '+ajout.join(', '));
+      await ref().set(D); rendu(); chargerArts();
+      toast(`${ajout.length} pile${ajout.length>1?'s':''} ajoutée${ajout.length>1?'s':''}`);
+      $('seedst').innerHTML = ajout.map(esc).join('<br>');
+    }
+  }catch(e){ $('seedst').innerHTML='<span class="err">'+esc(e.message)+'</span>'; }
+  $('mergego').disabled=false;
 });
 
 $('newpile').addEventListener('click', ()=>{
