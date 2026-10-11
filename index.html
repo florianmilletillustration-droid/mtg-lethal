@@ -184,7 +184,9 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
 .ovbd h4:first-child{margin-top:4px}
 .cx{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid rgba(58,48,64,.5)}
 .cx:last-child{border-bottom:0}
-.cx .th{width:58px;flex:none;aspect-ratio:1/1.1;border-radius:5px;background:#120f15 center/cover no-repeat}
+.cx .th{width:92px;flex:none;aspect-ratio:626/457;border-radius:5px;
+  background:#120f15 center/cover no-repeat;border:1px solid var(--edge)}
+@media(max-width:560px){ .cx .th{width:66px} }
 .cx .co{flex:1;min-width:0}
 .cx .nm{font-family:var(--disp);font-weight:700;font-size:1.02rem}
 .cx .nm .q{color:var(--gold);margin-right:5px}
@@ -483,7 +485,7 @@ function decks(){
   if(!ds.length){ $('dkgrid').innerHTML='<p class="lead">Aucun deck. Charge la collection depuis l\'onglet Import.</p>'; return; }
   $('dkgrid').innerHTML = ds.map(p=>{
     const t=total(p), et=nTest(p), ok=t===100;
-    const a=artDeck[p], bg = a&&a.url ? `background-image:url("${a.url}")` : '';
+    const a=artDeck[p], bg = a&&a.url ? `background-image:url('${a.url}')` : '';
     const nom = chef(p) || p.replace('DECK ','');
     const sous = [et?`<span class="tag test">${et} en test</span>`:''].filter(Boolean).join('');
     return `<article class="dk" data-deck="${esc(p)}" style="cursor:pointer">
@@ -855,7 +857,7 @@ function dessinerDeck(boite){
       const u=img(c,'art_crop');
       const fl=[]; if(gchg(c)) fl.push('<b>Game Changer</b>'); if(banni(c)) fl.push('<i>bannie</i>');
       h += `<div class="cx">
-        <div class="th" style="${u?`background-image:url("${u}")`:''}"></div>
+        <div class="th" style="${u?`background-image:url('${u}')`:''}"></div>
         <div class="co">
           <div class="nm"><span class="mc">${esc(face(c).mana_cost||'')}</span><span class="q">${q}</span>${esc(c.name)}</div>
           <div class="tl">${esc(c.type_line||'')}</div>
