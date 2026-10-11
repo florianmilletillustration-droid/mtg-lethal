@@ -442,7 +442,7 @@ function decks(){
     const a=artDeck[p], bg = a&&a.url ? `background-image:url("${a.url}")` : '';
     const nom = chef(p) || p.replace('DECK ','');
     const sous = [et?`<span class="tag test">${et} en test</span>`:''].filter(Boolean).join('');
-    return `<article class="dk">
+    return `<article class="dk" data-deck="${esc(p)}" style="cursor:pointer">
       <div class="art" data-art="${esc(p)}" style="${bg}">
         <div class="ttl">${esc(p.replace('DECK ',''))}</div>
       </div>
@@ -495,7 +495,7 @@ function piles(){
       `<div class="ln"><span class="q num">${D.piles[p][n]}</span><span class="n">${esc(n)}</span>
        <button class="sm" data-mv="${esc(n)}|${esc(p)}">déplacer</button></div>`).join('')
       || '<div class="ln small">vide</div>';
-    return `<details class="pile"><summary><span class="nm">${esc(p)}</span>
+    return `<details class="pile" data-pile="${esc(p)}"><summary><span class="nm">${esc(p)}</span>
       <span class="small num">${t.toLocaleString('fr-CA')}</span></summary>
       <div class="bd">${ls}</div></details>`;
   }).join('');
@@ -582,6 +582,9 @@ async function montrer(nom){
 
 /* ---------- actions ---------- */
 document.body.addEventListener('click', async e=>{
+  const dk=e.target.closest('[data-deck]');
+  if(dk){ ouvrirPile(dk.dataset.deck); return; }
+
   const rc=e.target.closest('[data-rec]');
   if(rc){ const [p,k,dv]=rc.dataset.rec.split('|');
     if(!D.parties) D.parties={};
@@ -709,11 +712,23 @@ $('newpile').addEventListener('click', ()=>{
   D.piles[n]={}; note(`Pile créée : ${n}`); sauver(); rendu();
 });
 
-document.querySelectorAll('nav button[data-t]').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('nav button[data-t]').forEach(x=>x.classList.remove('on'));
+function onglet(t){
+  document.querySelectorAll('nav button[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
   document.querySelectorAll('section').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); $('s-'+b.dataset.t).classList.add('on');
-}));
+  const s=$('s-'+t); if(s) s.classList.add('on');
+}
+document.querySelectorAll('nav button[data-t]').forEach(b=>
+  b.addEventListener('click',()=>onglet(b.dataset.t)));
+
+/* clic sur un deck → ouvre sa liste dans Cartables */
+function ouvrirPile(p){
+  onglet('piles');
+  const d=document.querySelector(`#piles [data-pile="${CSS.escape(p)}"]`);
+  if(!d) return;
+  document.querySelectorAll('#piles details.pile').forEach(x=>{ if(x!==d) x.open=false; });
+  d.open=true;
+  d.scrollIntoView({behavior:'smooth',block:'start'});
+}
 $('out').addEventListener('click', ()=>auth.signOut());
 
 /* ---------- connexion ---------- */
