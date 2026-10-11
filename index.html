@@ -310,7 +310,8 @@ let UID=null;
 let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{}, chefs:{} };
 
 const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Gitrog","DECK Strefan",
-                "DECK Zhulodok","DECK Elementals","Cartable Emile","Carte Emile","Carte Regis",
+                "DECK Zhulodok","DECK Elementals","DECK The Ancient One",
+                "Cartable Emile","Carte Emile","Carte Regis",
                 "Carte Floflo","Side Auntie Ool","À répartir"];
 /* commandant par défaut — modifiable par deck, stocké dans D.chefs */
 const CHEFS = {
@@ -320,7 +321,8 @@ const CHEFS = {
   "DECK Gitrog":"The Gitrog Monster",
   "DECK Strefan":"Strefan, Maurer Progenitor",
   "DECK Zhulodok":"Zhulodok, World Breaker",
-  "DECK Elementals":"Ashling, the Limitless"
+  "DECK Elementals":"Ashling, the Limitless",
+  "DECK The Ancient One":"The Ancient One"
 };
 const estDeck = p => p.startsWith('DECK ');
 const chef = p => (D.chefs && D.chefs[p]) || CHEFS[p] || null;
