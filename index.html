@@ -196,6 +196,9 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
 .cx .fl{font-size:.8rem;margin-top:3px}
 .cx .fl b{color:var(--gold)}
 .cx .fl i{color:var(--R);font-style:normal}
+.pl{display:flex;gap:10px;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(58,48,64,.4)}
+.pl .pp{font-family:var(--disp);font-weight:800;min-width:62px;text-align:right;color:var(--gold)}
+.pl .pn{flex:1;min-width:0}
 #ovtxt{width:100%;min-height:380px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
 </style>
 </head>
@@ -315,6 +318,7 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
       <h3 id="ovnom"></h3>
       <span id="ovpt" class="pt"></span>
       <button class="sm" id="ovcartes">Cartes</button>
+      <button class="sm" id="ovprix">Prix</button>
       <button class="sm" id="ovliste">Liste</button>
       <button class="sm" id="ovcopy">Copier</button>
       <button class="sm" id="ovx">Fermer</button>
@@ -357,8 +361,9 @@ let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{}, c
 
 const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Gitrog","DECK Strefan",
                 "DECK Zhulodok","DECK Elementals","DECK The Ancient One",
-                "Cartable Emile","Carte Emile","Carte Regis",
-                "Carte Floflo","Side Auntie Ool","À répartir"];
+                "DECK Muldrotha","Cartable Emile","Carte Emile","Carte Regis",
+                "Carte Floflo","Side Auntie Ool",
+                "À obtenir — Ancient One","À obtenir — Muldrotha","À répartir"];
 /* commandant par défaut — modifiable par deck, stocké dans D.chefs */
 const CHEFS = {
   "DECK Ayara":"Ayara, First of Locthwain",
@@ -368,7 +373,8 @@ const CHEFS = {
   "DECK Strefan":"Strefan, Maurer Progenitor",
   "DECK Zhulodok":"Zhulodok, World Breaker",
   "DECK Elementals":"Ashling, the Limitless",
-  "DECK The Ancient One":"The Ancient One"
+  "DECK The Ancient One":"The Ancient One",
+  "DECK Muldrotha":"Muldrotha, the Gravetide"
 };
 const estDeck = p => p.startsWith('DECK ');
 const chef = p => (D.chefs && D.chefs[p]) || CHEFS[p] || null;
@@ -378,7 +384,11 @@ const SF='https://api.scryfall.com'; const cache={}; let last=0;
 async function sf(path){
   const w = 100-(Date.now()-last); if(w>0) await new Promise(r=>setTimeout(r,w));
   last = Date.now();
-  const r = await fetch(SF+path,{headers:{Accept:'application/json'}});
+  let r = await fetch(SF+path,{headers:{Accept:'application/json'}});
+  if(!r.ok && r.status!==404){          // 429 ou panne passagère : on réessaie une fois
+    await new Promise(x=>setTimeout(x,1200)); last=Date.now();
+    r = await fetch(SF+path,{headers:{Accept:'application/json'}});
+  }
   if(!r.ok) throw new Error(r.status===404?'carte introuvable':('Scryfall '+r.status));
   return r.json();
 }
@@ -392,6 +402,42 @@ async function carte(nom){
   try{ localStorage.setItem('sf:'+c.name, JSON.stringify({t:Date.now(),c})); }catch(e){}
   return c;
 }
+function enCache(nom){ const c=cache[nom]; if(c) return c; try{
+  const o=JSON.parse(localStorage.getItem('sf:'+nom)||'null');
+  if(o && Date.now()-o.t < 7*864e5){ cache[nom]=o.c; return o.c; } }catch(e){} return null; }
+function garder(nom,c){ cache[nom]=c; cache[c.name]=c;
+  try{ localStorage.setItem('sf:'+c.name, JSON.stringify({t:Date.now(),c})); }catch(e){} }
+
+/* lot de 75 cartes par requête — /cards/collection. Bien plus rapide et pas de 429. */
+async function precharger(noms, avance){
+  const reste = noms.filter(n=>!enCache(n));
+  const introuvables = [];
+  for(let i=0;i<reste.length;i+=75){
+    const lot = reste.slice(i,i+75);
+    if(avance) avance(`lecture des cartes — ${Math.min(i+lot.length,reste.length)} / ${reste.length}`);
+    const w = 120-(Date.now()-last); if(w>0) await new Promise(r=>setTimeout(r,w));
+    last = Date.now();
+    let j=null;
+    try{
+      const r = await fetch(SF+'/cards/collection', { method:'POST',
+        headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body: JSON.stringify({ identifiers: lot.map(n=>({name:n})) }) });
+      if(r.ok) j = await r.json();
+    }catch(e){}
+    if(!j){ introuvables.push(...lot); continue; }           // lot entier en repli
+    (j.data||[]).forEach(c=>garder(c.name,c));
+    /* réassocier le nom demandé au résultat (casse, accents, faces) */
+    lot.forEach(n=>{ if(!cache[n]){
+      const c=(j.data||[]).find(x=>x.name.toLowerCase().startsWith(n.toLowerCase().split(' // ')[0]));
+      if(c) cache[n]=c; else introuvables.push(n); } });
+  }
+  /* repli un par un, en flou, pour le peu qui reste */
+  for(let i=0;i<introuvables.length;i++){
+    if(avance) avance(`vérification — ${i+1} / ${introuvables.length}`);
+    try{ await carte(introuvables[i]); }catch(e){}
+  }
+}
+
 const face  = c => (c.card_faces && c.card_faces[0]) ? c.card_faces[0] : c;
 const idc   = c => (c.color_identity||[]).join('') || 'C';
 const prix  = c => (c.prices && c.prices.usd) ? c.prices.usd+' USD' : 'prix à vérifier';
@@ -542,7 +588,8 @@ function piles(){
        <button class="sm" data-mv="${esc(n)}|${esc(p)}">déplacer</button></div>`).join('')
       || '<div class="ln small">vide</div>';
     return `<details class="pile" data-pile="${esc(p)}"><summary><span class="nm">${esc(p)}</span>
-      <span class="small num">${t.toLocaleString('fr-CA')}</span></summary>
+      <span class="small num">${t.toLocaleString('fr-CA')}</span>
+      <button class="sm" data-fiche="${esc(p)}">fiche</button></summary>
       <div class="bd">${ls}</div></details>`;
   }).join('');
 }
@@ -630,6 +677,9 @@ async function montrer(nom){
 document.body.addEventListener('click', async e=>{
   const dk=e.target.closest('[data-deck]');
   if(dk){ ouvrirDeck(dk.dataset.deck); return; }
+
+  const fi=e.target.closest('[data-fiche]');
+  if(fi){ e.preventDefault(); e.stopPropagation(); ouvrirDeck(fi.dataset.fiche); return; }
 
   const rc=e.target.closest('[data-rec]');
   if(rc){ const [p,k,dv]=rc.dataset.rec.split('|');
@@ -810,21 +860,22 @@ async function ouvrirDeck(p){
   dkCur=p;
   const t=total(p), ok=t===100;
   $('ovnom').textContent = p.replace('DECK ','');
-  $('ovpt').textContent = t+' / 100';
-  $('ovpt').className = 'pt '+(ok?'ok':'no');
+  $('ovpt').textContent = estDeck(p) ? t+' / 100' : t+' cartes';
+  $('ovpt').className = estDeck(p) ? 'pt '+(ok?'ok':'no') : 'pt';
   $('ovcorps').innerHTML=''; $('dkv').hidden=false;
   document.body.style.overflow='hidden';
 
   const noms = Object.keys(D.piles[p]||{}).sort((a,b)=>a.localeCompare(b,'fr'));
+  await precharger(noms, m=>{ if(dkCur===p) $('ovst').textContent=m; });
+  if(dkCur!==p) return;                         // fiche refermée entre-temps
+
   const boite = {}; ORDRE.forEach(g=>boite[g]=[]);
   const nomChef = chef(p);
-  for(let i=0;i<noms.length;i++){
-    if(dkCur!==p) return;                       // fiche refermée entre-temps
-    $('ovst').textContent = `lecture des cartes — ${i+1} / ${noms.length}`;
-    let c=null; try{ c=await carte(noms[i]); }catch(e){}
+  noms.forEach(n=>{
+    const c = enCache(n);
     const g = !c ? 'Autres' : (c.name===nomChef ? 'Commandant' : groupeDe(c.type_line||''));
-    boite[g].push([noms[i], D.piles[p][noms[i]], c]);
-  }
+    boite[g].push([n, D.piles[p][n], c]);
+  });
   $('ovst').textContent='';
   dessinerDeck(boite);
 }
@@ -846,6 +897,7 @@ function dessinerDeck(boite){
     $('ovtxt').value = listeTxt(boite);
     return;
   }
+  if(dkVue==='prix'){ dessinerPrix(boite); return; }
   let h='';
   ORDRE.forEach(g=>{
     const l=boite[g]; if(!l.length) return;
@@ -853,7 +905,7 @@ function dessinerDeck(boite){
     h += `<h4>${g} — ${n}</h4>`;
     l.forEach(([nom,q,c])=>{
       if(!c){ h+=`<div class="cx"><div class="co"><div class="nm"><span class="q">${q}</span>${esc(nom)}</div>
-        <div class="tl">carte non trouvée sur Scryfall</div></div></div>`; return; }
+        <div class="tl">texte non lu — rouvre la fiche pour réessayer</div></div></div>`; return; }
       const u=img(c,'art_crop');
       const fl=[]; if(gchg(c)) fl.push('<b>Game Changer</b>'); if(banni(c)) fl.push('<i>bannie</i>');
       h += `<div class="cx">
@@ -869,11 +921,50 @@ function dessinerDeck(boite){
   $('ovcorps').innerHTML = h || '<p class="lead">Cette pile est vide.</p>';
 }
 
+/* relevé de prix — prix Scryfall du jour, déjà chargés avec les cartes */
+let seuil = parseFloat(localStorage.getItem('seuil')||'10');
+function dessinerPrix(boite){
+  const l=[];
+  ORDRE.forEach(g=>boite[g].forEach(([nom,q,c])=>{
+    if(!c) { l.push([nom,q,null]); return; }
+    const p = c.prices && c.prices.usd ? parseFloat(c.prices.usd) : null;
+    l.push([c.name,q,p]);
+  }));
+  l.sort((a,b)=>(b[2]==null?-1:b[2])-(a[2]==null?-1:a[2]));
+  const haut=l.filter(x=>x[2]!=null && x[2]>=seuil);
+  const bas =l.filter(x=>x[2]!=null && x[2]< seuil);
+  const nul =l.filter(x=>x[2]==null);
+  const som = a => a.reduce((s,[,q,p])=>s+q*p,0);
+  const bloc=(titre,a,tot)=>!a.length?'':
+    `<h4>${titre} — ${a.reduce((s,[,q])=>s+q,0)} cartes${tot!=null?` · ${tot.toFixed(2)} USD`:''}</h4>`+
+    a.map(([n,q,p])=>`<div class="pl"><span class="pp">${p==null?'—':p.toFixed(2)}</span>
+      <span class="pn">${q>1?q+'× ':''}${esc(n)}</span></div>`).join('');
+  $('ovcorps').innerHTML =
+    `<div class="row" style="align-items:center;gap:8px;margin-bottom:6px">
+       <span class="small">Seuil</span>
+       <input id="ovseuil" type="number" min="0" step="1" value="${seuil}"
+              style="width:84px;padding:5px 8px">
+       <span class="small">USD — au-dessus, à obtenir autrement</span>
+     </div>
+     <p class="small">Prix Scryfall du jour, en USD. À convertir en CAD et à confronter
+        au prix de Top Deck Joliette, qui est souvent plus bas.</p>`
+    + bloc('À obtenir', haut, som(haut))
+    + bloc('À acheter', bas, som(bas))
+    + bloc('Prix inconnu', nul, null)
+    + `<h4>Total lu : ${(som(haut)+som(bas)).toFixed(2)} USD</h4>`;
+  $('ovseuil').addEventListener('change', e=>{
+    const v=parseFloat(e.target.value); if(isNaN(v)||v<0) return;
+    seuil=v; try{ localStorage.setItem('seuil',String(v)); }catch(err){}
+    dessinerPrix(boite);
+  });
+}
+
 function fermerDeck(){ dkCur=null; $('dkv').hidden=true; document.body.style.overflow=''; }
 $('ovx').addEventListener('click', fermerDeck);
 $('dkv').addEventListener('click', e=>{ if(e.target===$('dkv')) fermerDeck(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('dkv').hidden) fermerDeck(); });
 $('ovcartes').addEventListener('click', ()=>{ dkVue='cartes'; if(dkBoite) dessinerDeck(dkBoite); });
+$('ovprix').addEventListener('click',   ()=>{ dkVue='prix';   if(dkBoite) dessinerDeck(dkBoite); });
 $('ovliste').addEventListener('click', ()=>{ dkVue='liste';  if(dkBoite) dessinerDeck(dkBoite); });
 $('ovcopy').addEventListener('click', async()=>{
   if(!dkBoite) return;
