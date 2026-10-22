@@ -1,0 +1,340 @@
+<title>Fiches Combos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petrona:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : grille de fiches au format carte Magic (63,5 x 88,9 mm), une fiche par combo. */
+:root{
+  --paper:#efe9df;
+  --card:#fdfbf7;
+  --ink:#231f1c;
+  --ink-soft:#6b6259;
+  --rule:#cfc5b6;
+  --ayara:#5b2d6e;
+  --ool:#8a3a1e;
+  --zimone:#1d6b64;
+  --regle:#4a4f3a;
+  --display:"Petrona",Georgia,"Times New Roman",serif;
+  --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#15130f; --card:#201c18; --ink:#ece5da; --ink-soft:#9a9086; --rule:#3a342c;
+  --ayara:#b183c9; --ool:#e08a5f; --zimone:#5fc0b4; --regle:#a8b08c; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#15130f; --card:#201c18; --ink:#ece5da; --ink-soft:#9a9086; --rule:#3a342c;
+  --ayara:#b183c9; --ool:#e08a5f; --zimone:#5fc0b4; --regle:#a8b08c; color-scheme:dark;
+}
+
+body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.45;margin:0}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 48px;max-width:1180px;margin:0 auto}
+
+header.top{display:flex;flex-direction:column;gap:6px;margin-bottom:28px}
+header.top h1{font-family:var(--display);font-weight:700;font-size:clamp(1.9rem,5vw,2.6rem);line-height:1.1;margin:0;text-wrap:balance}
+header.top p{margin:0;color:var(--ink-soft);max-width:62ch;font-size:.95rem}
+.hint{font-size:.82rem;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:10px;margin-top:6px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px}
+
+.fiche{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  width:100%;aspect-ratio:63.5/88.9;max-width:100%;
+  display:flex;flex-direction:column;overflow:hidden;
+  --accent:var(--ink);
+}
+.fiche.ayara{--accent:var(--ayara)}
+.fiche.ool{--accent:var(--ool)}
+.fiche.zimone{--accent:var(--zimone)}
+.fiche.regle{--accent:var(--regle)}
+
+.bandeau{background:var(--accent);color:var(--card);padding:5px 9px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex:none}
+.bandeau .deck{font-family:var(--body);font-weight:600;font-size:.62rem;letter-spacing:.11em;text-transform:uppercase}
+.bandeau .ci{font-family:var(--mono);font-size:.62rem;font-weight:600;opacity:.85}
+
+.corps{padding:9px;display:flex;flex-direction:column;gap:7px;min-height:0;flex:1;overflow:hidden}
+.corps h2{font-family:var(--display);font-weight:700;font-size:1.02rem;line-height:1.15;margin:0;color:var(--accent);text-wrap:balance}
+
+.bloc{display:flex;flex-direction:column;gap:2px;min-width:0}
+.et{font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.pieces{font-family:var(--mono);font-size:.64rem;line-height:1.4;font-weight:600;min-width:0;overflow-wrap:break-word}
+.txt{font-size:.645rem;line-height:1.38;margin:0;min-width:0;overflow-wrap:break-word}
+ol.boucle{margin:0;padding-left:1.05em;font-size:.645rem;line-height:1.36;display:flex;flex-direction:column;gap:1px}
+ul.puces{margin:0;padding-left:.95em;font-size:.645rem;line-height:1.36;display:flex;flex-direction:column;gap:2px}
+
+.pied{margin-top:auto;border-top:1px solid var(--rule);padding-top:5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.pied .k{font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.pied .v{font-family:var(--mono);font-size:.68rem;font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
+
+.alerte{border-left:2px solid var(--accent);padding-left:6px;font-size:.61rem;line-height:1.34;color:var(--ink-soft)}
+.annonce{font-family:var(--display);font-style:italic;font-size:.7rem;line-height:1.3}
+
+@media print{
+  body{background:#fff;color:#000}
+  .wrap{padding:0;max-width:none}
+  header.top,.hint{display:none}
+  .grid{display:block}
+  .fiche{width:63.5mm;height:88.9mm;aspect-ratio:auto;float:left;margin:0 3mm 3mm 0;page-break-inside:avoid;background:#fff;border:.3mm solid #999}
+}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Fiches combos</h1>
+  <p>Une fiche par combo, plus un récapitulatif par deck. Format carte Magic&nbsp;: 63,5&nbsp;×&nbsp;88,9&nbsp;mm, à imprimer et glisser dans une pochette avec le deck.</p>
+  <p class="hint">Vérifié le 21 octobre 2026 contre les textes oracle et les rulings officiels. Ayara 100/100 · Auntie Ool 100/100 · Zimone 100/100.</p>
+</header>
+
+<div class="grid">
+
+  <!-- ===== AYARA ===== -->
+  <article class="fiche ayara">
+    <div class="bandeau"><span class="deck">Ayara</span><span class="ci">B</span></div>
+    <div class="corps">
+      <h2>Boucle de Gravecrawler</h2>
+      <div class="bloc">
+        <span class="et">Pièces</span>
+        <div class="pieces">Gravecrawler<br>Carrion Feeder<br>Phyrexian Altar</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Boucle</span>
+        <ol class="boucle">
+          <li>Sacrifiez Gravecrawler à Carrion Feeder.</li>
+          <li>Phyrexian Altar produit {B}.</li>
+          <li>Relancez Gravecrawler du cimetière — Carrion Feeder est un Zombie.</li>
+          <li>Recommencez.</li>
+        </ol>
+      </div>
+      <div class="bloc">
+        <span class="et">Tue avec</span>
+        <p class="txt">Blood Artist, Zulaport Cutthroat, Falkenrath Noble, Vengeful Dead ou Ayara elle-même.</p>
+      </div>
+      <p class="alerte">Pitiless Plunderer remplace Phyrexian Altar&nbsp;: c'est le Treasure qui paie le {B}.</p>
+      <div class="pied"><span class="k">Tour</span><span class="v">5–6</span></div>
+    </div>
+  </article>
+
+  <article class="fiche ayara">
+    <div class="bandeau"><span class="deck">Ayara</span><span class="ci">B</span></div>
+    <div class="corps">
+      <h2>Moteur de mana</h2>
+      <div class="bloc">
+        <span class="et">Pièces</span>
+        <div class="pieces">Urborg, Tomb of Yawgmoth<br>Cabal Coffers<br>Crypt Ghast<br>Magus of the Coffers</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Pourquoi</span>
+        <p class="txt">Urborg rend chaque terrain Marais. Cabal Coffers compte donc tes 37 terrains, pas tes 24 Swamp. Crypt Ghast double chaque terrain engagé, pas seulement les Swamp.</p>
+      </div>
+      <div class="bloc">
+        <span class="et">Débouché</span>
+        <p class="txt">Exsanguinate, Gray Merchant of Asphodel, Bolas's Citadel.</p>
+      </div>
+      <div class="pied"><span class="k">À 8 terrains</span><span class="v">16 {B}</span></div>
+    </div>
+  </article>
+
+  <article class="fiche ayara">
+    <div class="bandeau"><span class="deck">Ayara</span><span class="ci">Bracket 4</span></div>
+    <div class="corps">
+      <h2>Récapitulatif</h2>
+      <div class="bloc">
+        <span class="et">8 Game Changers</span>
+        <div class="pieces">Ancient Tomb · Bolas's Citadel · Demonic Tutor · Mana Vault · Necropotence · Opposition Agent · Orcish Bowmasters · Vampiric Tutor</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Descendre d'un cran</span>
+        <p class="txt">Retire Carrion Feeder et Phyrexian Altar&nbsp;: plus de boucle infinie, le deck redevient un aristocrats Zombie honnête. Bracket 3.</p>
+      </div>
+      <div class="bloc">
+        <span class="et">Annonce</span>
+        <p class="annonce">«&nbsp;Mono-noir Zombies, bracket 4. Combo infini à trois cartes avec Gravecrawler, plusieurs tutors. Je peux tuer au tour 5 ou 6.&nbsp;»</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ===== AUNTIE OOL ===== -->
+  <article class="fiche ool">
+    <div class="bandeau"><span class="deck">Auntie Ool</span><span class="ci">B G R</span></div>
+    <div class="corps">
+      <h2>Druid + Quillspike</h2>
+      <div class="bloc">
+        <span class="et">Pièces</span>
+        <div class="pieces">Devoted Druid<br>Quillspike</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Boucle</span>
+        <ol class="boucle">
+          <li>Devoted Druid se met un -1/-1 pour se dégager.</li>
+          <li>Auntie Ool&nbsp;: tu pioches une carte.</li>
+          <li>Quillspike retire le marqueur pour +3/+3.</li>
+          <li>Recommencez.</li>
+        </ol>
+      </div>
+      <div class="bloc">
+        <span class="et">Donne</span>
+        <p class="txt">Mana vert infini, pioche infinie, Quillspike infiniment gros. Nest of Scarabs fait des Insectes infinis, Hapatra des Serpents, Flourishing Defenses des Elfes.</p>
+      </div>
+      <p class="alerte">Arrête la boucle avant de vider ta bibliothèque. Green Sun's Zenith va chercher l'une ou l'autre pièce.</p>
+      <div class="pied"><span class="k">Tour</span><span class="v">3–4</span></div>
+    </div>
+  </article>
+
+  <article class="fiche ool">
+    <div class="bandeau"><span class="deck">Auntie Ool</span><span class="ci">B G R</span></div>
+    <div class="corps">
+      <h2>Persistance</h2>
+      <div class="bloc">
+        <span class="et">Pièces</span>
+        <div class="pieces">Putrid Goblin <em>ou</em> Murderous Redcap<br>Grumgully <em>ou</em> Mazirek<br>Yawgmoth, Thran Physician</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Boucle</span>
+        <ol class="boucle">
+          <li>Sacrifie Putrid Goblin à Yawgmoth — paie 1 vie, pioche 1.</li>
+          <li>La persistance le renvoie avec un -1/-1.</li>
+          <li>Grumgully lui donne un +1/+1&nbsp;: les marqueurs s'annulent.</li>
+          <li>La persistance est de nouveau active. Recommencez.</li>
+        </ol>
+      </div>
+      <div class="bloc">
+        <span class="et">Tue avec</span>
+        <p class="txt">Blood Artist, Bastion of Remembrance et Obelisk Spider drainent à chaque tour de boucle. Avec Murderous Redcap, dégâts directs.</p>
+      </div>
+      <p class="alerte">Chaque itération coûte 1 vie. Avec les trois drains, il faut environ 14 tours de boucle pour descendre un adversaire de 40 à 0.</p>
+      <div class="pied"><span class="k">Tour</span><span class="v">5–6</span></div>
+    </div>
+  </article>
+
+  <article class="fiche ool">
+    <div class="bandeau"><span class="deck">Auntie Ool</span><span class="ci">Bracket 4</span></div>
+    <div class="corps">
+      <h2>Récapitulatif</h2>
+      <div class="bloc">
+        <span class="et">6 Game Changers</span>
+        <div class="pieces">Ancient Tomb · Imperial Seal · Jeska's Will · Seedborn Muse · Survival of the Fittest · Vampiric Tutor</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Attention en jeu</span>
+        <p class="txt">Everlasting Torment empêche tout gain de vie, y compris le tien. Les adversaires perdent quand même leurs points.</p>
+      </div>
+      <div class="bloc">
+        <span class="et">Descendre d'un cran</span>
+        <p class="txt">Retire Quillspike et Grumgully. Bracket 3.</p>
+      </div>
+      <div class="bloc">
+        <span class="et">Annonce</span>
+        <p class="annonce">«&nbsp;Jund à marqueurs -1/-1, bracket 4. Plusieurs combos infinis avec de la persistance, tuable vers le tour 5.&nbsp;»</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ===== ZIMONE ===== -->
+  <article class="fiche zimone">
+    <div class="bandeau"><span class="deck">Zimone</span><span class="ci">G U</span></div>
+    <div class="corps">
+      <h2>Landfall infini</h2>
+      <div class="bloc">
+        <span class="et">Pièces</span>
+        <div class="pieces">Sakura-Tribe Scout<br>Retreat to Coralhelm<br>Simic Growth Chamber</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Boucle</span>
+        <ol class="boucle">
+          <li>Pose Simic Growth Chamber avec le Scout.</li>
+          <li>Landfall&nbsp;: Retreat dégage le Scout.</li>
+          <li>La Chamber renvoie un terrain dans ta main.</li>
+          <li>Recommencez.</li>
+        </ol>
+      </div>
+      <div class="bloc">
+        <span class="et">Tue avec</span>
+        <p class="txt">Scute Swarm à 6 terrains ou plus fait des copies infinies. Craterhoof Behemoth ou Overwhelming Stampede conclut. Natural Order va chercher Craterhoof pour 4 mana.</p>
+      </div>
+      <p class="alerte">Tatyova et Aesi piochent à chaque landfall. Pense à t'arrêter avant de vider ta bibliothèque.</p>
+      <div class="pied"><span class="k">Tour</span><span class="v">6</span></div>
+    </div>
+  </article>
+
+  <article class="fiche zimone">
+    <div class="bandeau"><span class="deck">Zimone</span><span class="ci">G U</span></div>
+    <div class="corps">
+      <h2>Verrou Pickles</h2>
+      <div class="bloc">
+        <span class="et">Pièces</span>
+        <div class="pieces">Brine Elemental<br>Vesuvan Shapeshifter</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Boucle</span>
+        <ol class="boucle">
+          <li>À ton entretien, retourne Vesuvan Shapeshifter face cachée.</li>
+          <li>Retourne-le face visible en copiant Brine Elemental.</li>
+          <li>Chaque adversaire saute son prochain dégagement.</li>
+          <li>Recommencez à chaque tour.</li>
+        </ol>
+      </div>
+      <div class="bloc">
+        <span class="et">Coût</span>
+        <p class="txt">{1}{U} par tour pour le morph, ou gratuit si un landfall de Zimone retourne la carte.</p>
+      </div>
+      <p class="alerte">Ce n'est pas un combo infini&nbsp;: c'est un verrou qui se répète chaque tour. La table reste engagée.</p>
+      <div class="pied"><span class="k">Tour</span><span class="v">7+</span></div>
+    </div>
+  </article>
+
+  <article class="fiche zimone">
+    <div class="bandeau"><span class="deck">Zimone</span><span class="ci">Bracket 4</span></div>
+    <div class="corps">
+      <h2>Récapitulatif</h2>
+      <div class="bloc">
+        <span class="et">2 Game Changers</span>
+        <div class="pieces">Natural Order · Seedborn Muse</div>
+      </div>
+      <div class="bloc">
+        <span class="et">Le commandant</span>
+        <p class="txt">Premier landfall du tour&nbsp;: manifeste l'effroi. Chaque landfall suivant&nbsp;: retourne un permanent face visible, gratuitement.</p>
+      </div>
+      <div class="bloc">
+        <span class="et">Descendre d'un cran</span>
+        <p class="txt">Retire Retreat to Coralhelm et Natural Order. Bracket 3.</p>
+      </div>
+      <div class="bloc">
+        <span class="et">Annonce</span>
+        <p class="annonce">«&nbsp;Simic landfall avec Zimone, bracket 4. Combo infini à trois cartes avec Sakura-Tribe Scout, tuable vers le tour 6.&nbsp;»</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- ===== RÈGLES ===== -->
+  <article class="fiche regle">
+    <div class="bandeau"><span class="deck">Règles</span><span class="ci">Face cachée</span></div>
+    <div class="corps">
+      <h2>Manifest &amp; morph</h2>
+      <ul class="puces">
+        <li>Retourner un permanent face visible <strong>ne déclenche pas</strong> les capacités d'arrivée&nbsp;: il n'a jamais quitté le champ de bataille.</li>
+        <li>Une carte <strong>non-créature</strong> manifestée ne peut jamais être retournée. Tu la révèles, elle reste face cachée.</li>
+        <li>Les capacités qui se déclenchent sur un retournement ne se déclenchent donc pas non plus.</li>
+        <li>Retourner ne change pas l'état engagé ou dégagé.</li>
+        <li>Une carte double face ne se retourne que si sa face avant est une créature.</li>
+        <li>Un permanent manifesté est un 2/2 incolore, sans nom, sans coût, valeur de mana 0.</li>
+      </ul>
+      <div class="pied"><span class="k">Source</span><span class="v">Rulings 2024-09-20</span></div>
+    </div>
+  </article>
+
+  <article class="fiche regle">
+    <div class="bandeau"><span class="deck">Règles</span><span class="ci">Marqueurs</span></div>
+    <div class="corps">
+      <h2>Marqueurs &amp; landfall</h2>
+      <ul class="puces">
+        <li>Les marqueurs +1/+1 et -1/-1 s'annulent, en action basée sur l'état. C'est ce qui relance la persistance.</li>
+        <li>Une créature qui <strong>arrive avec</strong> des marqueurs compte comme «&nbsp;on a posé des marqueurs&nbsp;»&nbsp;: Auntie Ool, Nest of Scarabs, Hapatra et Flourishing Defenses se déclenchent.</li>
+        <li>Devoted Druid pose son marqueur <strong>comme coût</strong>, pas à la résolution.</li>
+        <li>Les fetchlands et Evolving Wilds donnent <strong>deux</strong> déclenchements de landfall.</li>
+        <li>Le landfall se déclenche quand un terrain <em>arrive</em>, pas quand un permanent déjà en jeu devient un terrain.</li>
+      </ul>
+      <div class="pied"><span class="k">Source</span><span class="v">Rulings officiels</span></div>
+    </div>
+  </article>
+
+</div>
+</div>

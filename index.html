@@ -30,6 +30,16 @@ h3{font-size:1.15rem;margin:0 0 6px}
 p{margin:0 0 10px}
 a{color:var(--gold)}
 .lead{color:var(--parch2);max-width:62ch}
+.cbd{margin-bottom:34px}
+.cbg{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:14px;margin:12px 0 16px}
+.cbo{background:var(--ink2);border:1px solid var(--edge);border-top:3px solid var(--t);
+  border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.cbl{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-top:5px}
+.cbp{font-weight:700;line-height:1.4;overflow-wrap:break-word;min-width:0}
+.cbt{margin-top:auto;padding-top:9px;border-top:1px solid var(--edge);font-weight:700}
+.cbw{border-left:3px solid var(--gold);padding-left:11px}
+.cbq{font-family:var(--disp);font-style:italic;font-size:1.08rem;line-height:1.4;
+  border-left:3px solid var(--gold);padding-left:12px;color:var(--parch);max-width:62ch}
 .small{font-size:.9rem;color:var(--dim)}
 
 button{font-family:var(--ui);font-size:.92rem;font-weight:500;background:transparent;color:var(--parch);
@@ -231,6 +241,7 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
       <button data-t="piles">Cartables</button>
       <button data-t="test">En test</button>
       <button data-t="arriv">Arrivage</button>
+      <button data-t="combos">Combos</button>
       <button data-t="import">Import</button>
       <button data-t="journal">Journal</button>
       <span style="flex:1"></span>
@@ -307,6 +318,12 @@ td{padding:7px 9px;border-bottom:1px solid #251f2b;vertical-align:top}
       </div>
     </section>
 
+    <section id="s-combos">
+      <p class="lead">Ce que tu annonces à la table, et comment la boucle tourne.
+      Les mêmes fiches existent au format carte, à imprimer.</p>
+      <div id="cb"></div>
+    </section>
+
     <section id="s-journal"><div id="jr"></div></section>
     <div style="height:60px"></div>
   </div>
@@ -357,7 +374,7 @@ let TO; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add(
   clearTimeout(TO); TO=setTimeout(()=>t.classList.remove('on'),2200); }
 
 let UID=null;
-let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{}, chefs:{} };
+let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{}, chefs:{}, combos:{} };
 
 const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Gitrog","DECK Strefan",
                 "DECK Zhulodok","DECK Elementals","DECK The Ancient One",
@@ -497,7 +514,38 @@ function heros(){
 }
 
 /* ---------- rendu ---------- */
-function rendu(){ tally(); alertes(); decks(); parties(); piles(); tests(); arrbac(); expsel(); journal(); }
+function rendu(){ tally(); alertes(); decks(); parties(); piles(); tests(); arrbac(); expsel(); journal(); combos(); }
+
+/* ---------- combos : lit D.combos, rempli par collection-depart.json ---------- */
+function combos(){
+  const C = D.combos || {}, ks = Object.keys(C);
+  if(!ks.length){ $('cb').innerHTML='<p class="lead">Aucun combo enregistré. Recharge la collection depuis l\'onglet Import.</p>'; return; }
+  const teinte = {'DECK Ayara':'var(--B)','DECK Auntie Ool':'var(--R)','DECK Zimone':'var(--G)'};
+  $('cb').innerHTML = ks.map(k=>{
+    const d = C[k] || {}, t = teinte[k] || 'var(--gold)';
+    const fiches = (d.combos||[]).map(c=>`
+      <div class="cbo" style="--t:${t}">
+        <h3 style="color:${t}">${esc(c.nom)}</h3>
+        <div class="cbl">Pièces</div>
+        <div class="cbp">${(c.pieces||[]).map(esc).join('<br>')}</div>
+        ${c.variante?`<div class="cbl">Variante</div><p class="small">${c.variante.map(esc).join('<br>')}</p>`:''}
+        ${c.tue?`<div class="cbl">Tue avec</div><p class="small">${c.tue.map(esc).join(' · ')}</p>`:''}
+        ${c.cout?`<div class="cbl">Coût</div><p class="small">${esc(c.cout)}</p>`:''}
+        ${c.note?`<p class="small" style="color:var(--dim)">${esc(c.note)}</p>`:''}
+        <div class="cbt" style="color:${t}">Tour ${esc(c.tour||'?')}</div>
+      </div>`).join('');
+    return `<div class="cbd">
+      <h2 style="color:${t}">${esc(k.replace('DECK ',''))}
+        <span class="pt" style="background:${t};color:var(--ink)">Bracket ${esc(d.bracket)}</span></h2>
+      <p class="small">${esc(d.gc)} Game Changers</p>
+      <div class="cbg">${fiches}</div>
+      ${d.moteur?`<p class="small"><b>Moteur de mana :</b> ${d.moteur.map(esc).join(' · ')}</p>`:''}
+      ${d.attention?`<p class="small cbw" style="border-color:${t}">${esc(d.attention)}</p>`:''}
+      ${d.descendre?`<p class="small"><b>Descendre d'un cran :</b> retire ${d.descendre.map(esc).join(' et ')}</p>`:''}
+      ${d.annonce?`<p class="cbq" style="border-color:${t}">« ${esc(d.annonce)} »</p>`:''}
+    </div>`;
+  }).join('');
+}
 
 function alertes(){
   const a=[];
@@ -794,7 +842,8 @@ $('seedgo').addEventListener('click', async()=>{
     if(!r.ok) throw new Error('collection-depart.json introuvable dans le dépôt');
     const s=await r.json();
     D={ piles:s.piles||{}, tests:s.tests||[], arrivage:s.arrivage||{}, journal:s.journal||[],
-        partage:D.partage||[], parties:D.parties||{}, chefs:D.chefs||{} };
+        partage:D.partage||[], parties:D.parties||{}, chefs:D.chefs||{},
+        combos:s.combos||D.combos||{} };
     DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; });
     await ref().set(D); rendu(); chargerArts(); $('seedst').textContent='';
     toast('Collection chargée');
@@ -814,6 +863,8 @@ $('mergego').addEventListener('click', async()=>{
       if(n>0 && total(p)===0){ D.piles[p]=s.piles[p]; ajout.push(`${p} (${n})`); }
     }
     for(const p in (s.chefs||{})) if(!D.chefs[p]) D.chefs[p]=s.chefs[p];
+    if(s.combos){ D.combos=D.combos||{}; for(const p in s.combos) D.combos[p]=s.combos[p];
+                  if(!ajout.length) ajout.push('combos'); }
     DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; });
     $('seedst').textContent='';
     if(!ajout.length){ toast('Rien à ajouter — toutes les piles sont déjà remplies'); }
