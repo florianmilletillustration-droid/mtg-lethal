@@ -376,22 +376,27 @@ let TO; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add(
 let UID=null;
 let D = { piles:{}, tests:[], arrivage:{}, journal:[], partage:[], parties:{}, chefs:{}, combos:{} };
 
-const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Gitrog","DECK Strefan",
+const DEFAUT = ["DECK Ayara","DECK Aesi","DECK Auntie Ool","DECK Strefan",
                 "DECK Zhulodok","DECK Elementals","DECK The Ancient One",
-                "DECK Muldrotha","Cartable Emile","Carte Emile","Carte Regis",
+                "DECK Scarab God","DECK Zimone",
+                "Cartable Emile","Carte Emile","Carte Regis",
                 "Carte Floflo","Side Auntie Ool",
-                "À obtenir — Ancient One","À obtenir — Muldrotha","À répartir"];
+                "À obtenir — Ancient One","À répartir"];
+/* piles retirées — effacées au chargement si elles sont vides */
+const RETIRES = ["DECK Gitrog","DECK Muldrotha","À obtenir — Muldrotha"];
+function purger(){ RETIRES.forEach(p=>{ const v=D.piles[p];
+  if(!v || !Object.values(v).reduce((a,b)=>a+b,0)) delete D.piles[p]; }); }
 /* commandant par défaut — modifiable par deck, stocké dans D.chefs */
 const CHEFS = {
   "DECK Ayara":"Ayara, First of Locthwain",
   "DECK Aesi":"Aesi, Tyrant of Gyre Strait",
   "DECK Auntie Ool":"Auntie Ool, Cursewretch",
-  "DECK Gitrog":"The Gitrog Monster",
   "DECK Strefan":"Strefan, Maurer Progenitor",
   "DECK Zhulodok":"Zhulodok, World Breaker",
   "DECK Elementals":"Ashling, the Limitless",
   "DECK The Ancient One":"The Ancient One",
-  "DECK Muldrotha":"Muldrotha, the Gravetide"
+  "DECK Scarab God":"The Scarab God",
+  "DECK Zimone":"Zimone, Mystery Unraveler"
 };
 const estDeck = p => p.startsWith('DECK ');
 const chef = p => (D.chefs && D.chefs[p]) || CHEFS[p] || null;
@@ -474,7 +479,7 @@ async function charger(){
   const d = s.exists ? s.data() : {};
   D = { piles:d.piles||{}, tests:d.tests||[], arrivage:d.arrivage||{}, journal:d.journal||[],
         partage:d.partage||[], parties:d.parties||{}, chefs:d.chefs||{} };
-  DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; });
+  DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; }); purger();
   if(!s.exists) await ref().set(D);
 }
 
@@ -496,10 +501,15 @@ async function chargerArts(){
   for (const p of decks){
     const nom = chef(p); if(!nom) continue;
     try{
-      const c = await carte(nom);
-      artDeck[p] = { url: img(c,'art_crop'), carte: c.name, artiste: c.artist||'' };
+      let c = await carte(nom);
+      let u = img(c,'art_crop');
+      if(!u){ await new Promise(r=>setTimeout(r,400));
+              delete cache[nom]; try{ localStorage.removeItem('sf:'+nom); }catch(e){}
+              c = await carte(nom); u = img(c,'art_crop'); }
+      artDeck[p] = { url: u, carte: c.name, artiste: c.artist||'' };
       const el = document.querySelector(`[data-art="${CSS.escape(p)}"]`);
       if (el && artDeck[p].url) el.style.backgroundImage = `url("${artDeck[p].url}")`;
+      else if(!artDeck[p].url) console.warn('illustration introuvable pour', p, nom);
     }catch(e){}
   }
   heros();
@@ -844,7 +854,7 @@ $('seedgo').addEventListener('click', async()=>{
     D={ piles:s.piles||{}, tests:s.tests||[], arrivage:s.arrivage||{}, journal:s.journal||[],
         partage:D.partage||[], parties:D.parties||{}, chefs:D.chefs||{},
         combos:s.combos||D.combos||{} };
-    DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; });
+    DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; }); purger();
     await ref().set(D); rendu(); chargerArts(); $('seedst').textContent='';
     toast('Collection chargée');
   }catch(e){ $('seedst').innerHTML='<span class="err">'+esc(e.message)+'</span>'; }
@@ -865,7 +875,7 @@ $('mergego').addEventListener('click', async()=>{
     for(const p in (s.chefs||{})) if(!D.chefs[p]) D.chefs[p]=s.chefs[p];
     if(s.combos){ D.combos=D.combos||{}; for(const p in s.combos) D.combos[p]=s.combos[p];
                   if(!ajout.length) ajout.push('combos'); }
-    DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; });
+    DEFAUT.forEach(p=>{ if(!D.piles[p]) D.piles[p]={}; }); purger();
     $('seedst').textContent='';
     if(!ajout.length){ toast('Rien à ajouter — toutes les piles sont déjà remplies'); }
     else{
